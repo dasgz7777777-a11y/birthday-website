@@ -1,0 +1,467 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Happy Birthday</title>
+  <style>
+    html,body{margin:0;padding:0;height:100%;overflow:hidden;font-family:'Poppins',sans-serif;background:linear-gradient(135deg,#ffdee9,#b5fffc);}
+    .container{position:relative;width:100%;height:100%;display:flex;align-items:center;justify-content:center;flex-direction:column;color:#fff;text-align:center;}
+    h1{font-size:60px;letter-spacing:3px;text-shadow:0 4px 10px rgba(0,0,0,0.3);}
+    .typing{font-size:28px;height:40px;margin-top:10px;}
+    .cursor{display:inline-block;width:6px;height:30px;background:#fff;margin-left:5px;animation:blink 1s infinite;}
+    @keyframes blink{50%{opacity:0}}
+
+    /* 生日蛋糕样式（保持不变，仅控制生成时机） */
+    .cake {
+      position:absolute;
+      width: 80px;
+      height: 60px;
+      bottom: -150px;
+      animation: rise 10s infinite ease-in;
+      z-index: 10;
+    }
+    .cake .layer {
+      height: 20px;
+      border-radius: 5px 5px 0 0;
+    }
+    .cake .candle {
+      position: absolute;
+      top: -20px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 8px;
+      height: 30px;
+      background: #ffff00;
+    }
+    .cake .flame {
+      position: absolute;
+      top: -30px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 12px;
+      height: 15px;
+      background: #ff6600;
+      border-radius: 50% 50% 0;
+      animation: flicker 0.5s infinite alternate;
+    }
+    @keyframes flicker {
+      0% { transform: translateX(-50%) scale(1); opacity: 0.8; }
+      100% { transform: translateX(-50%) scale(1.1); opacity: 1; }
+    }
+    @keyframes rise {
+      0% { transform: translateY(0) rotate(0deg); }
+      100% { transform: translateY(-120vh) rotate(20deg); }
+    }
+
+    /* 优化后的礼盒样式（更漂亮可爱） */
+    .gift-box {
+      width: 100px;
+      height: 100px;
+      margin-top: 40px;
+      position: relative;
+      cursor: pointer;
+      display: none; /* 初始隐藏 */
+      z-index: 20;
+      transition: all 0.3s ease;
+    }
+    .gift-box:hover {
+      transform: scale(1.1) rotate(5deg);
+    }
+    .gift-box .box {
+      width: 100%;
+      height: 100%;
+      background: #ff9ff3; /* 马卡龙粉色 */
+      border-radius: 8px;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+      position: relative;
+    }
+    .gift-box .lid {
+      position: absolute;
+      top: -18px;
+      left: 0;
+      width: 100%;
+      height: 25px;
+      background: #ff7675; /* 深一点的粉色 */
+      border-radius: 8px 8px 0 0;
+      box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
+    }
+    /* 丝带优化 */
+    .gift-box .ribbon {
+      position: absolute;
+      background: #00d2d3; /* 清新蓝色丝带 */
+    }
+    .gift-box .ribbon.vertical {
+      width: 18px;
+      height: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      border-radius: 3px;
+    }
+    .gift-box .ribbon.horizontal {
+      width: 100%;
+      height: 18px;
+      top: 50%;
+      transform: translateY(-50%);
+      border-radius: 3px;
+    }
+    /* 蝴蝶结装饰 */
+    .gift-box .bow {
+      position: absolute;
+      top: -30px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 60px;
+      height: 30px;
+    }
+    .gift-box .bow-left, .gift-box .bow-right {
+      position: absolute;
+      width: 25px;
+      height: 30px;
+      background: #00d2d3;
+      border-radius: 50%;
+    }
+    .gift-box .bow-left {
+      left: 0;
+    }
+    .gift-box .bow-right {
+      right: 0;
+    }
+
+    .gift-hint {
+      margin-top: 10px;
+      font-size: 16px;
+      color: #fff;
+      display: none; /* 初始隐藏 */
+      z-index: 20;
+      text-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    }
+
+    /* 倒计时&黑屏样式（保持不变） */
+    .countdown {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: #000; /* 纯黑屏 */
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.5s;
+    }
+    .countdown.show {
+      opacity: 1;
+      pointer-events: all;
+    }
+    .countdown-text, .ready-text {
+      color: #fff;
+      font-size: 80px;
+      font-weight: bold;
+      text-shadow: 0 0 20px rgba(255,255,255,0.8);
+      opacity: 0;
+      transform: scale(0.5);
+      transition: all 0.5s;
+    }
+    .ready-text {
+      font-size: 40px;
+    }
+    .countdown-text.show, .ready-text.show {
+      opacity: 1;
+      transform: scale(1);
+    }
+
+    /* 初始交互提示（保持不变） */
+    .interaction-hint {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.7);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 200;
+      color: #fff;
+      font-size: 24px;
+      cursor: pointer;
+    }
+
+    /* 烟花（保持不变，仅控制触发时机） */
+    canvas{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;}
+  </style>
+</head>
+<body>
+  <!-- 初始交互提示 -->
+  <div class="interaction-hint" id="interactionHint">点击点击</div>
+  
+  <canvas id="fireworks"></canvas>
+  
+  <div class="container">
+    <h1>农历生日专属定制</h1>
+    <div class="typing" id="typing"></div><span class="cursor"></span>
+    
+    <!-- 优化后的礼盒（增加蝴蝶结） -->
+    <div class="gift-box" id="giftBox">
+      <div class="box"></div>
+      <div class="lid"></div>
+      <div class="ribbon vertical"></div>
+      <div class="ribbon horizontal"></div>
+      <div class="bow">
+        <div class="bow-left"></div>
+        <div class="bow-right"></div>
+      </div>
+    </div>
+    <div class="gift-hint" id="giftHint">--点击礼盒开启惊喜！！！--</div>
+  </div>
+  
+  <!-- 倒计时容器（保持不变） -->
+  <div class="countdown" id="countdown">
+    <div class="ready-text" id="readyText">准备好了嘛</div>
+    <div class="countdown-text" id="countdownText"></div>
+  </div>
+
+  <script>
+    // 元素获取（保持不变）
+    const typingEl = document.getElementById('typing');
+    const giftBox = document.getElementById('giftBox');
+    const giftHint = document.getElementById('giftHint');
+    const countdown = document.getElementById('countdown');
+    const readyText = document.getElementById('readyText');
+    const countdownText = document.getElementById('countdownText');
+    const interactionHint = document.getElementById('interactionHint');
+    
+    // 音乐设置（保持不变）
+    const audio = new Audio('Happy Birthday.mp3');
+    audio.loop = true;
+    let isMusicPlaying = false;
+
+    // 状态控制（保持不变）
+    let isFullFireworks = false;
+    let particles = [];
+    let W, H;
+
+    // 打字效果（保持不变）
+    const text = 'Happy Birthday to you';
+    let index = 0;
+    function typing(){
+      if(index <= text.length){
+        typingEl.textContent = text.slice(0,index++);
+        setTimeout(typing,150);
+        
+        // 打字完成后显示礼盒
+        if (index === text.length + 1) {
+          setTimeout(() => {
+            giftBox.style.display = 'block';
+            giftHint.style.display = 'block';
+          }, 500);
+        }
+      }
+    }
+
+    // 生成生日蛋糕（保持函数逻辑，仅控制调用时机）
+    const cakeColors = [
+      { layer1: '#ffcccc', layer2: '#ffb3b3', layer3: '#ff9999' },
+      { layer1: '#ccffcc', layer2: '#b3ffb3', layer3: '#99ff99' },
+      { layer1: '#ccccff', layer2: '#b3b3ff', layer3: '#9999ff' },
+      { layer1: '#ffcc99', layer2: '#ffb380', layer3: '#ff9966' }
+    ];
+    
+    // 初始生成一批蛋糕（当前仅在倒计时后调用）
+    function createInitialCakes() {
+      for(let i=0;i<10;i++){
+        createCake();
+      }
+    }
+    
+    // 倒计时后继续生成蛋糕（保持漂浮效果）
+    function continueCreatingCakes() {
+      // 每隔一段时间生成新蛋糕，保持持续漂浮
+      setInterval(() => {
+        createCake();
+      }, 2000);
+    }
+    
+    // 创建单个蛋糕（保持不变）
+    function createCake() {
+      const cake = document.createElement('div');
+      cake.className = 'cake';
+      cake.style.left = Math.random()*100+'%';
+      
+      const colorSet = cakeColors[Math.floor(Math.random()*cakeColors.length)];
+      
+      // 蛋糕层
+      const layer1 = document.createElement('div');
+      layer1.className = 'layer';
+      layer1.style.background = colorSet.layer1;
+      
+      const layer2 = document.createElement('div');
+      layer2.className = 'layer';
+      layer2.style.background = colorSet.layer2;
+      
+      const layer3 = document.createElement('div');
+      layer3.className = 'layer';
+      layer3.style.background = colorSet.layer3;
+      
+      // 蜡烛和火焰
+      const candle = document.createElement('div');
+      candle.className = 'candle';
+      
+      const flame = document.createElement('div');
+      flame.className = 'flame';
+      
+      cake.appendChild(layer1);
+      cake.appendChild(layer2);
+      cake.appendChild(layer3);
+      cake.appendChild(candle);
+      cake.appendChild(flame);
+      
+      // 动画延迟和时长随机
+      cake.style.animationDelay = (Math.random()*5)+'s';
+      cake.style.animationDuration = (8+Math.random()*4)+'s';
+      document.body.appendChild(cake);
+      
+      // 动画结束后移除蛋糕元素（避免内存占用）
+      setTimeout(() => {
+        cake.remove();
+      }, 15000);
+    }
+
+    // 烟花动画（保持原始效果，仅控制触发时机）
+    const canvas = document.getElementById('fireworks');
+    const ctx = canvas.getContext('2d');
+    
+    function resize(){
+      W = canvas.width = window.innerWidth;
+      H = canvas.height = window.innerHeight;
+    }
+    resize();
+    window.addEventListener('resize', resize);
+
+    function random(min, max){
+      return Math.random()*(max-min)+min;
+    }
+    
+    // 普通烟花（保持原始参数）
+    function createNormalFirework(){
+      const x = random(0, W);
+      const y = random(H/2, H);
+      for(let i=0;i<100;i++){
+        particles.push({
+          x, y,
+          angle: random(0, Math.PI*2),
+          speed: random(2,7),
+          radius: random(1,4),
+          life: random(60,120)
+        });
+      }
+    }
+    
+    // 倒计时后增强版烟花（比普通多50%粒子）
+    function createEnhancedFirework() {
+      const x = random(0, W);
+      const y = random(H/3, H*2/3);
+      for(let i=0;i<150;i++){  // 比普通烟花多50%粒子
+        particles.push({
+          x, y,
+          angle: random(0, Math.PI*2),
+          speed: random(3,8),   // 速度稍快
+          radius: random(1,5),  // 粒子稍大
+          life: random(70,140)  // 生命周期稍长
+        });
+      }
+    }
+
+    function draw(){
+      ctx.fillStyle = 'rgba(0,0,0,0.1)';
+      ctx.fillRect(0,0,W,H);
+      for(let i=particles.length-1;i>=0;i--){
+        const p = particles[i];
+        const vx = Math.cos(p.angle)*p.speed;
+        const vy = Math.sin(p.angle)*p.speed;
+        p.x += vx;
+        p.y += vy;
+        p.speed *= 0.98;
+        p.life--;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.radius, 0, Math.PI*2);
+        ctx.fillStyle = `hsl(${p.life*3},100%,60%)`;
+        ctx.fill();
+        if(p.life <= 0){
+          particles.splice(i,1);
+        }
+      }
+      requestAnimationFrame(draw);
+    }
+
+    // 礼盒点击事件（触发倒计时，保持不变）
+    giftBox.addEventListener('click', () => {
+      // 隐藏礼盒
+      giftBox.style.display = 'none';
+      giftHint.style.display = 'none';
+      
+      // 显示黑屏和“准备好了嘛”
+      countdown.classList.add('show');
+      setTimeout(() => {
+        readyText.classList.add('show');
+        
+        // 倒计时逻辑
+        setTimeout(() => {
+          readyText.classList.remove('show');
+          
+          // 显示“3”
+          setTimeout(() => {
+            countdownText.textContent = '3';
+            countdownText.classList.add('show');
+            
+            // 切换到“2”
+            setTimeout(() => {
+              countdownText.classList.remove('show');
+              setTimeout(() => {
+                countdownText.textContent = '2';
+                countdownText.classList.add('show');
+                
+                // 切换到“1”
+                setTimeout(() => {
+                  countdownText.classList.remove('show');
+                  setTimeout(() => {
+                    countdownText.textContent = '1';
+                    countdownText.classList.add('show');
+setTimeout(() => {
+  countdownText.classList.remove('show');
+  countdown.classList.remove('show');
+  isFullFireworks = true;
+  clearInterval(fireworkInterval);
+  fireworkInterval = setInterval(createEnhancedFirework, 500);
+  createInitialCakes();
+  continueCreatingCakes();
+}, 1000);
+}, 500);
+}, 1000);
+}, 500);
+}, 1000);
+}, 1000);
+}, 1500);
+}, 500);
+});
+
+interactionHint.addEventListener('click', () => {
+  interactionHint.style.display = 'none';
+  audio.play().then(() => {
+    isMusicPlaying = true;
+  }).catch(err => {
+    console.log(' 音乐需要用户交互:', err);
+  });
+  typing();
+});
+
+draw();
+let fireworkInterval = null;
+</script>
+</body>
+</html>
+                    
